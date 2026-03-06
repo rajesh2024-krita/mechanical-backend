@@ -44,7 +44,7 @@ const startServer = async () => {
             console.log('✅ Database synced');
         }
 
-        const server = app.listen(PORT, () => {
+        const server = app.listen(PORT, "0.0.0.0", () => {
             console.log(`✅ Server running on port ${PORT}`);
             console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
             console.log(`🔑 Test login: POST http://localhost:${PORT}/api/auth/login`);
