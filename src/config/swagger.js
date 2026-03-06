@@ -14,7 +14,7 @@ const options = {
         },
         servers: [
             {
-                url: 'https://api.msengineers.net.au/api',
+                url: 'http://api.msengineers.net.au/api',
                 description: 'Production Server'
             }   
         ],
