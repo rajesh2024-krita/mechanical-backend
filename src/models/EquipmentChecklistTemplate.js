@@ -12,7 +12,7 @@ const EquipmentChecklistTemplate = sequelize.define('EquipmentChecklistTemplate'
         allowNull: false
     },
     item_text: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING(255),
         allowNull: false
     },
     item_type: {
@@ -33,7 +33,14 @@ const EquipmentChecklistTemplate = sequelize.define('EquipmentChecklistTemplate'
     indexes: [
         {
             unique: true,
-            fields: ['equipment_type', 'item_text', 'item_type']
+            fields: [
+                'equipment_type',
+                {
+                    name: 'item_text',
+                    length: 191
+                },
+                'item_type'
+            ]
         },
         {
             fields: ['equipment_type', 'sort_order']

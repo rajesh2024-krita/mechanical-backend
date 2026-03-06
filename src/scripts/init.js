@@ -239,7 +239,7 @@ const initDatabase = async () => {
             CREATE TABLE IF NOT EXISTS equipment_checklist_templates (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 equipment_type VARCHAR(100) NOT NULL,
-                item_text TEXT NOT NULL,
+                item_text VARCHAR(255) NOT NULL,
                 item_type ENUM('CHECKLIST', 'ADDON') NOT NULL DEFAULT 'CHECKLIST',
                 sort_order INT NOT NULL DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
