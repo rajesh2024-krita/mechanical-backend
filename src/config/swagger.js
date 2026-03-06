@@ -14,9 +14,9 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:5000/api',
-                description: 'Development server'
-            }
+                url: 'https://api.msengineers.net.au/api',
+                description: 'Production Server'
+            }   
         ],
         components: {
             securitySchemes: {
