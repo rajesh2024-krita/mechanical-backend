@@ -26,6 +26,11 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Respect X-Forwarded-* headers when deployed behind a reverse proxy/load balancer.
+if (process.env.TRUST_PROXY === 'true') {
+    app.set('trust proxy', 1);
+}
+
 // Set security headers
 app.use(helmet());
 
@@ -35,12 +40,25 @@ app.use(cors({
     credentials: true
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use('/api', limiter);
+// Rate limiting (kept off in development by default to avoid blocking local frontend calls)
+const isProduction = process.env.NODE_ENV === 'production';
+const rateLimitEnabled = process.env.RATE_LIMIT_ENABLED
+    ? process.env.RATE_LIMIT_ENABLED === 'true'
+    : isProduction;
+
+if (rateLimitEnabled) {
+    const limiter = rateLimit({
+        windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 10 * 60 * 1000, // 10 minutes
+        max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 500,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: {
+            success: false,
+            message: 'Too many requests, please try again later.'
+        }
+    });
+    app.use('/api', limiter);
+}
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

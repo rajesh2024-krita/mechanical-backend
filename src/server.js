@@ -1,11 +1,11 @@
 const dotenv = require('dotenv');
-const app = require('./app');
 const { sequelize, testConnection } = require('./config/database');
 const { seedEquipmentChecklistTemplates } = require('./utils/seedEquipmentChecklists');
 const { DataTypes } = require('sequelize');
 
 // Load env vars
 dotenv.config();
+const app = require('./app');
 
 const PORT = process.env.PORT || 5000;
 
