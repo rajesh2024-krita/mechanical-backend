@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
@@ -39,26 +38,6 @@ app.use(cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true
 }));
-
-// Rate limiting (kept off in development by default to avoid blocking local frontend calls)
-const isProduction = process.env.NODE_ENV === 'production';
-const rateLimitEnabled = process.env.RATE_LIMIT_ENABLED
-    ? process.env.RATE_LIMIT_ENABLED === 'true'
-    : isProduction;
-
-if (rateLimitEnabled) {
-    const limiter = rateLimit({
-        windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 10 * 60 * 1000, // 10 minutes
-        max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 500,
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: {
-            success: false,
-            message: 'Too many requests, please try again later.'
-        }
-    });
-    app.use('/api', limiter);
-}
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
