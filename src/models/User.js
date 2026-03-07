@@ -53,6 +53,15 @@ const User = sequelize.define('User', {
     is_active: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
+    },
+    version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1
+    },
+    deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true
     }
 }, {
     tableName: 'users',
@@ -72,6 +81,9 @@ const User = sequelize.define('User', {
                 const salt = await bcrypt.genSalt(10);
                 user.password = await bcrypt.hash(user.password, salt);
                 console.log('Password updated for user:', user.email);
+            }
+            if (!user.changed('version')) {
+                user.setDataValue('version', (Number(user.getDataValue('version')) || 0) + 1);
             }
         }
     }

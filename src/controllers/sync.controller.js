@@ -6,6 +6,7 @@ const {
     Task,
     User
 } = require('../models');
+const { pushMutations: pushMutationsService, pullChanges: pullChangesService } = require('../services/sync.service');
 
 const mapFrontendRoleToApi = (role = 'TECHNICIAN') => {
     const normalized = String(role || '').toUpperCase();
@@ -287,4 +288,61 @@ const syncBatch = async (req, res, next) => {
     }
 };
 
-module.exports = { syncBatch };
+const validatePushRequest = (body) => {
+    if (!body || typeof body !== 'object') {
+        return 'Invalid request payload';
+    }
+
+    if (!Array.isArray(body.mutations)) {
+        return '`mutations` must be an array';
+    }
+
+    if (body.mutations.length > Number(process.env.SYNC_MAX_MUTATIONS_PER_PUSH || 500)) {
+        return 'Mutation batch exceeds maximum allowed size';
+    }
+
+    return null;
+};
+
+const pushMutations = async (req, res, next) => {
+    try {
+        const validationError = validatePushRequest(req.body);
+        if (validationError) {
+            return res.status(400).json({
+                success: false,
+                message: validationError
+            });
+        }
+
+        const payload = await pushMutationsService({
+            user: req.user,
+            deviceId: req.headers['x-device-id'] || req.body.device_id || null,
+            mutations: req.body.mutations
+        });
+
+        return res.status(200).json({
+            success: true,
+            ...payload
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+const pullChanges = async (req, res, next) => {
+    try {
+        const payload = await pullChangesService({
+            user: req.user,
+            cursor: req.query.cursor
+        });
+
+        return res.status(200).json({
+            success: true,
+            ...payload
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+module.exports = { syncBatch, pushMutations, pullChanges };

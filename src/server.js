@@ -2,6 +2,7 @@ const dotenv = require('dotenv');
 const { sequelize, testConnection } = require('./config/database');
 const { seedEquipmentChecklistTemplates } = require('./utils/seedEquipmentChecklists');
 const { DataTypes } = require('sequelize');
+const { ensureSyncSchemaCompatibility } = require('./services/syncSchema.service');
 
 // Load env vars
 dotenv.config();
@@ -35,6 +36,7 @@ const startServer = async () => {
         }
 
         await ensureLegacySchemaCompatibility();
+        await ensureSyncSchemaCompatibility();
 
         // Sync database (in development)
         if (process.env.NODE_ENV === 'development') {

@@ -7,6 +7,7 @@ const Task = require('./Task');
 const TaskChecklist = require('./TaskChecklist');
 const ActivityLog = require('./ActivityLog');
 const SyncLog = require('./SyncLog');
+const SyncMutationLog = require('./SyncMutationLog');
 
 // Define associations
 User.belongsTo(Building, { foreignKey: 'building_id', as: 'building' });
@@ -45,5 +46,6 @@ module.exports = {
     Task,
     TaskChecklist,
     ActivityLog,
-    SyncLog
+    SyncLog,
+    SyncMutationLog
 };

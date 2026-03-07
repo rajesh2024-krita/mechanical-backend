@@ -19,12 +19,28 @@ const Equipment = sequelize.define('Equipment', {
         type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'UNDER_MAINTENANCE'),
         allowNull: false,
         defaultValue: 'ACTIVE'
+    },
+    version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1
+    },
+    deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true
     }
 }, {
     tableName: 'equipment',
     timestamps: true,
     createdAt: 'created_at',
-    updatedAt: 'updated_at'
+    updatedAt: 'updated_at',
+    hooks: {
+        beforeUpdate: (row) => {
+            if (!row.changed('version')) {
+                row.setDataValue('version', (Number(row.getDataValue('version')) || 0) + 1);
+            }
+        }
+    }
 });
 
 module.exports = Equipment;
