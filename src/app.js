@@ -34,12 +34,13 @@ if (process.env.TRUST_PROXY === 'true') {
 app.use(helmet());
 
 // Enable CORS
-// app.use(cors({
-//     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-//     credentials: true
-// }));
 app.use(cors({
-  origin: true,
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://localhost",
+    "capacitor://localhost"
+  ],
   credentials: true
 }));
 
