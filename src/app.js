@@ -34,9 +34,13 @@ if (process.env.TRUST_PROXY === 'true') {
 app.use(helmet());
 
 // Enable CORS
+// app.use(cors({
+//     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+//     credentials: true
+// }));
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-    credentials: true
+  origin: true,
+  credentials: true
 }));
 
 // Static files
