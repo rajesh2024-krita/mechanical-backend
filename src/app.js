@@ -36,7 +36,7 @@ app.use(helmet());
 // Enable CORS
 app.use(cors({
   origin: [
-      "http://app.msengineers.net.au/",
+      "http://app.msengineers.net.au",
     "http://localhost:3000",
     "http://localhost:5173",
     "https://localhost",
