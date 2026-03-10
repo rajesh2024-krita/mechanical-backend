@@ -102,6 +102,17 @@ const options = {
                         created_at: { type: 'string', format: 'date-time' }
                     }
                 },
+                ActivityLogInput: {
+                    type: 'object',
+                    required: ['action_type', 'entity_type'],
+                    properties: {
+                        user_id: { type: 'integer', example: 1 },
+                        action_type: { type: 'string', example: 'CREATE' },
+                        entity_type: { type: 'string', example: 'EQUIPMENT' },
+                        entity_id: { type: 'integer', example: 1 },
+                        description: { type: 'string', example: 'Created equipment: HVAC System' }
+                    }
+                },
                 Error: {
                     type: 'object',
                     properties: {

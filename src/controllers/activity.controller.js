@@ -37,7 +37,27 @@ const { sequelize } = require('../config/database');
  *         created_at:
  *           type: string
  *           format: date-time
- */
+ *     ActivityLogInput:
+ *       type: object
+ *       required:
+ *         - action_type
+ *         - entity_type
+ *       properties:
+ *         user_id:
+ *           type: integer
+ *           example: 1
+ *         action_type:
+ *           type: string
+ *           example: CREATE
+ *         entity_type:
+ *           type: string
+ *           example: EQUIPMENT
+ *         entity_id:
+ *           type: integer
+ *           example: 1
+ *         description:
+ *           type: string
+ *           example: Created equipment: HVAC System
 
 /**
  * @swagger
@@ -255,7 +275,344 @@ const getActivityStats = async (req, res, next) => {
     }
 };
 
+/**
+ * @swagger
+ * /activity:
+ *   post:
+ *     summary: Create a new activity log entry
+ *     tags: [Activity]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ActivityLogInput'
+ *     responses:
+ *       201:
+ *         description: Activity log created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 activity:
+ *                   $ref: '#/components/schemas/ActivityLog'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+const createActivity = async (req, res, next) => {
+    try {
+        const { user_id, action_type, entity_type, entity_id, description } = req.body;
+
+        // Validate required fields
+        if (!action_type || !entity_type) {
+            return res.status(400).json({
+                success: false,
+                message: 'action_type and entity_type are required'
+            });
+        }
+
+        // Create the activity log
+        const activity = await ActivityLog.create({
+            user_id: user_id || req.user.id, // Use provided user_id or current user
+            action_type,
+            entity_type,
+            entity_id,
+            description
+        });
+
+        // Fetch the created activity with user details
+        const activityWithUser = await ActivityLog.findByPk(activity.id, {
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'role', 'building_id']
+                }
+            ]
+        });
+
+        res.status(201).json({
+            success: true,
+            activity: activityWithUser
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @swagger
+ * /activity/{id}:
+ *   get:
+ *     summary: Get a single activity log by ID
+ *     tags: [Activity]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Activity log ID
+ *     responses:
+ *       200:
+ *         description: Activity log details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 activity:
+ *                   $ref: '#/components/schemas/ActivityLog'
+ *       404:
+ *         description: Activity log not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+const getActivity = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const activity = await ActivityLog.findByPk(id, {
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'role', 'building_id']
+                }
+            ]
+        });
+
+        if (!activity) {
+            return res.status(404).json({
+                success: false,
+                message: 'Activity log not found'
+            });
+        }
+
+        // Check if user can access this activity (same building restriction)
+        if (req.user.role !== 'SUPER_ADMIN' && activity.user && activity.user.building_id !== req.user.building_id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            activity
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @swagger
+ * /activity/{id}:
+ *   put:
+ *     summary: Update an activity log entry
+ *     tags: [Activity]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Activity log ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ActivityLogInput'
+ *     responses:
+ *       200:
+ *         description: Activity log updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 activity:
+ *                   $ref: '#/components/schemas/ActivityLog'
+ *       404:
+ *         description: Activity log not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+const updateActivity = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { user_id, action_type, entity_type, entity_id, description } = req.body;
+
+        const activity = await ActivityLog.findByPk(id);
+
+        if (!activity) {
+            return res.status(404).json({
+                success: false,
+                message: 'Activity log not found'
+            });
+        }
+
+        // Check if user can access this activity (same building restriction)
+        if (req.user.role !== 'SUPER_ADMIN') {
+            const activityUser = await User.findByPk(activity.user_id);
+            if (activityUser && activityUser.building_id !== req.user.building_id) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied'
+                });
+            }
+        }
+
+        // Update the activity log
+        await activity.update({
+            user_id: user_id || activity.user_id,
+            action_type: action_type || activity.action_type,
+            entity_type: entity_type || activity.entity_type,
+            entity_id: entity_id !== undefined ? entity_id : activity.entity_id,
+            description: description !== undefined ? description : activity.description
+        });
+
+        // Fetch the updated activity with user details
+        const updatedActivity = await ActivityLog.findByPk(id, {
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'role', 'building_id']
+                }
+            ]
+        });
+
+        res.status(200).json({
+            success: true,
+            activity: updatedActivity
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @swagger
+ * /activity/{id}:
+ *   delete:
+ *     summary: Delete an activity log entry
+ *     tags: [Activity]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Activity log ID
+ *     responses:
+ *       200:
+ *         description: Activity log deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Activity log not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+const deleteActivity = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const activity = await ActivityLog.findByPk(id);
+
+        if (!activity) {
+            return res.status(404).json({
+                success: false,
+                message: 'Activity log not found'
+            });
+        }
+
+        // Check if user can access this activity (same building restriction)
+        if (req.user.role !== 'SUPER_ADMIN') {
+            const activityUser = await User.findByPk(activity.user_id);
+            if (activityUser && activityUser.building_id !== req.user.building_id) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied'
+                });
+            }
+        }
+
+        await activity.destroy();
+
+        res.status(200).json({
+            success: true,
+            message: 'Activity log deleted successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getActivities,
-    getActivityStats
+    getActivityStats,
+    createActivity,
+    getActivity,
+    updateActivity,
+    deleteActivity
 };

@@ -38,6 +38,7 @@ app.use(cors({
   origin: [
       "http://app.msengineers.net.au",
     "http://localhost:3000",
+    "http://localhost:5000",
     "http://localhost:5173",
     "https://localhost",
     "https://app.msengineers.net.au/",
