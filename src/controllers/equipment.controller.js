@@ -39,6 +39,10 @@ const splitChecklistAndAddons = (rows) => {
 };
 
 const getEquipmentTypes = async (req, res, next) => {
+    console.log("################");
+    console.log("Equipment type", req.body);
+    
+    
     try {
         const where = {};
         if (req.user.role !== 'SUPER_ADMIN') {
@@ -75,6 +79,8 @@ const getEquipmentTypes = async (req, res, next) => {
 };
 
 const getChecklistByType = async (req, res, next) => {
+    console.log("################");
+    console.log("checklist", req.body);
     try {
         const equipmentType = normalizeEquipmentType(req.params.equipmentType || '');
 
@@ -117,6 +123,8 @@ const getChecklistByType = async (req, res, next) => {
 };
 
 const getChecklistByEquipmentId = async (req, res, next) => {
+    console.log("################");
+    console.log("checklist by id", req.body);
     try {
         const equipment = await Equipment.findByPk(req.params.id);
 
@@ -303,6 +311,10 @@ const createAddonChecklistItem = async (req, res, next) => {
  *                     $ref: '#/components/schemas/Equipment'
  */
 const getEquipment = async (req, res, next) => {
+    console.log("################");
+
+    console.log("get equipment",req.body);
+    
     try {
         const where = {};
         
@@ -372,8 +384,11 @@ const getEquipment = async (req, res, next) => {
  *                   $ref: '#/components/schemas/Equipment'
  */
 const getEquipmentById = async (req, res, next) => {
+    console.log("################");
+    console.log("Equipment byid", req.body);
+    
     try {
-        const equipment = await Equipment.findByPk(req.params.id, {
+        const equipment = await Equipment.findByPk(Number(req.params.id), {
             include: [
                 {
                     model: Building,
@@ -478,15 +493,25 @@ const createEquipment = async (req, res, next) => {
             name,
             status
         } = req.body;
+        const buildingId = Number(building_id);
 
-        if (req.user.role !== 'SUPER_ADMIN' && building_id !== req.user.building_id) {
+        console.log("***************************");
+        
+        console.log(buildingId,name,status);
+        console.log(req.body);
+        console.log(req.user);
+        
+        
+        
+
+        if (req.user.role !== 'SUPER_ADMIN' && buildingId !== req.user.building_id) {
             return res.status(403).json({
                 success: false,
                 message: 'You can only add equipment to your building'
             });
         }
 
-        const building = await Building.findByPk(building_id);
+        const building = await Building.findByPk(buildingId);
         if (!building) {
             return res.status(404).json({
                 success: false,

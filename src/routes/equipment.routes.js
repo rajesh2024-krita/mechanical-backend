@@ -65,6 +65,7 @@ const { authorize, checkBuildingAccess } = require('../middleware/role.middlewar
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/', protect, authorize('SUPER_ADMIN', 'MANAGER', 'TECHNICIAN'), getEquipment);
+router.get('/:id', protect, authorize('SUPER_ADMIN', 'MANAGER', 'TECHNICIAN'), getEquipmentById);
 router.get('/types', protect, authorize('SUPER_ADMIN', 'MANAGER', 'TECHNICIAN'), getEquipmentTypes);
 router.get('/checklists/:equipmentType', protect, authorize('SUPER_ADMIN', 'MANAGER', 'TECHNICIAN'), getChecklistByType);
 router.get('/:id/checklists', protect, authorize('SUPER_ADMIN', 'MANAGER', 'TECHNICIAN'), getChecklistByEquipmentId);

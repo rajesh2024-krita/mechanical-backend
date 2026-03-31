@@ -19,6 +19,11 @@ const authorize = (...roles) => {
 };
 
 const checkBuildingAccess = (req, res, next) => {
+    console.log("USER DEBUG:", {
+        id: req.user?.id,
+        role: req.user?.role,
+        building_id: req.user?.building_id
+    });
     if (!req.user) {
         return res.status(401).json({
             success: false,
